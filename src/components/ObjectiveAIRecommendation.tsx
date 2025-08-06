@@ -30,10 +30,20 @@ interface SupervisorKeyResult {
   progress: number;
 }
 
+interface ObjectiveSuggestion {
+  id: string;
+  title: string;
+  description: string;
+  priority: 'High' | 'Medium' | 'Low';
+  timeframe: string;
+  alignment: string;
+  confidence: number;
+}
+
 interface ObjectiveAIRecommendationProps {
   isOpen: boolean;
   onClose: () => void;
-  onApprove: (keyResults: KeyResultSuggestion[], selectedSupervisorKR: SupervisorKeyResult) => void;
+  onApprove: (objective: ObjectiveSuggestion, keyResults: KeyResultSuggestion[], selectedSupervisorKR: SupervisorKeyResult) => void;
 }
 
 const ObjectiveAIRecommendation = ({
@@ -46,6 +56,8 @@ const ObjectiveAIRecommendation = ({
   const [selectedSupervisorKR, setSelectedSupervisorKR] = useState<string>("");
   const [editingKeyResults, setEditingKeyResults] = useState<{[key: string]: KeyResultSuggestion}>({});
   const [editingKeyResult, setEditingKeyResult] = useState<string | null>(null);
+  const [editingObjective, setEditingObjective] = useState<ObjectiveSuggestion | null>(null);
+  const [isEditingObjective, setIsEditingObjective] = useState(false);
   const { toast } = useToast();
 
   // Mock supervisor key results
@@ -85,6 +97,17 @@ const ObjectiveAIRecommendation = ({
   ];
 
   const selectedSupervisorKRData = supervisorKeyResults.find(kr => kr.id === selectedSupervisorKR);
+
+  // Mock AI-generated objective suggestion
+  const mockObjective: ObjectiveSuggestion = {
+    id: "obj1",
+    title: "Enhance Team Productivity Through Process Optimization",
+    description: "Drive significant improvements in team efficiency by implementing automated workflows, enhancing collaboration tools, and optimizing key processes to support the supervisor's productivity targets.",
+    priority: "High",
+    timeframe: "Q1 2024",
+    alignment: "Directly aligns with supervisor's goal to improve team productivity by 25%",
+    confidence: 92
+  };
 
   // Mock AI-generated key results
   const mockKeyResults: KeyResultSuggestion[] = [
@@ -188,14 +211,41 @@ const ObjectiveAIRecommendation = ({
       const original = mockKeyResults.find(kr => kr.id === id);
       return edited || original!;
     });
+
+    const finalObjective = editingObjective || mockObjective;
     
-    onApprove(approved, selectedSupervisorKRData);
+    onApprove(finalObjective, approved, selectedSupervisorKRData);
     onClose();
     
     toast({
-      title: "Key Results Added",
-      description: `${approved.length} AI-recommended key results aligned with ${selectedSupervisorKRData.supervisor}'s objective`,
+      title: "Objective and Key Results Added",
+      description: `AI-recommended objective with ${approved.length} key results aligned with ${selectedSupervisorKRData.supervisor}'s objective`,
     });
+  };
+
+  const startEditingObjective = () => {
+    setIsEditingObjective(true);
+    setEditingObjective({ ...mockObjective });
+  };
+
+  const saveObjectiveEdit = () => {
+    setIsEditingObjective(false);
+    toast({
+      title: "Objective Updated",
+      description: "Objective has been updated with your changes",
+    });
+  };
+
+  const cancelObjectiveEdit = () => {
+    setIsEditingObjective(false);
+    setEditingObjective(null);
+  };
+
+  const updateEditingObjective = (field: keyof ObjectiveSuggestion, value: any) => {
+    setEditingObjective(prev => prev ? {
+      ...prev,
+      [field]: value
+    } : null);
   };
 
   const startEditing = (keyResult: KeyResultSuggestion) => {
@@ -333,9 +383,106 @@ const ObjectiveAIRecommendation = ({
           {/* Recommendations */}
           {!isGenerating && selectedSupervisorKR && mockKeyResults.length > 0 && (
             <>
+              {/* Objective Suggestion */}
+              <Card className="border-green-200 bg-green-50/50">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-2 flex-1">
+                      <Target className="h-5 w-5 text-green-600" />
+                      {isEditingObjective ? (
+                        <Input
+                          value={editingObjective?.title || ''}
+                          onChange={(e) => updateEditingObjective('title', e.target.value)}
+                          className="flex-1 font-medium"
+                          placeholder="Objective title..."
+                        />
+                      ) : (
+                        <CardTitle className="text-base flex-1">
+                          {editingObjective?.title || mockObjective.title}
+                        </CardTitle>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      {isEditingObjective ? (
+                        <div className="flex gap-1">
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
+                            onClick={saveObjectiveEdit}
+                          >
+                            <Save className="h-3 w-3" />
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
+                            onClick={cancelObjectiveEdit}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button 
+                          size="sm" 
+                          variant="ghost"
+                          onClick={startEditingObjective}
+                        >
+                          <Edit3 className="h-3 w-3" />
+                        </Button>
+                      )}
+                      
+                      <Badge variant="outline" className="text-green-600">
+                        {editingObjective?.confidence || mockObjective.confidence}% confidence
+                      </Badge>
+                      <Badge variant="secondary" className="bg-green-100 text-green-800">
+                        {editingObjective?.priority || mockObjective.priority} Priority
+                      </Badge>
+                    </div>
+                  </div>
+                </CardHeader>
+                
+                <CardContent className="space-y-3">
+                  {isEditingObjective ? (
+                    <Textarea
+                      value={editingObjective?.description || ''}
+                      onChange={(e) => updateEditingObjective('description', e.target.value)}
+                      className="text-sm"
+                      placeholder="Objective description..."
+                      rows={3}
+                    />
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      {editingObjective?.description || mockObjective.description}
+                    </p>
+                  )}
+                  
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-4 w-4" />
+                      {isEditingObjective ? (
+                        <Input
+                          value={editingObjective?.timeframe || ''}
+                          onChange={(e) => updateEditingObjective('timeframe', e.target.value)}
+                          className="text-xs h-6 w-20"
+                          placeholder="Q1 2024"
+                        />
+                      ) : (
+                        <span>Timeframe: {editingObjective?.timeframe || mockObjective.timeframe}</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <TrendingUp className="h-4 w-4" />
+                      <span>Alignment: {editingObjective?.alignment || mockObjective.alignment}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Separator />
+
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">
-                  Recommended Key Results for "{selectedSupervisorKRData?.title}"
+                  Recommended Key Results
                 </h3>
                 <Badge variant="secondary">
                   {selectedKeyResults.length} selected

@@ -20,6 +20,16 @@ interface KeyResult {
   milestones: string[];
 }
 
+interface ObjectiveSuggestion {
+  id: string;
+  title: string;
+  description: string;
+  priority: 'High' | 'Medium' | 'Low';
+  timeframe: string;
+  alignment: string;
+  confidence: number;
+}
+
 interface ObjectiveSetModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -79,7 +89,10 @@ const ObjectiveSetModal = ({ isOpen, onClose }: ObjectiveSetModalProps) => {
     setKeyResults(prev => prev.filter(kr => kr.id !== id));
   };
 
-  const handleAIRecommendationApprove = (aiKeyResults: any[]) => {
+  const handleAIRecommendationApprove = (objective: ObjectiveSuggestion, aiKeyResults: any[], selectedSupervisorKR: any) => {
+    // Apply the objective suggestion
+    setObjectiveName(objective.title);
+    
     const newKeyResults: KeyResult[] = aiKeyResults.map(kr => ({
       id: kr.id,
       title: kr.title,
@@ -89,6 +102,14 @@ const ObjectiveSetModal = ({ isOpen, onClose }: ObjectiveSetModalProps) => {
     }));
     
     setKeyResults(prev => [...prev, ...newKeyResults]);
+    setSupervisorKeyResult(selectedSupervisorKR.title);
+    setObjectiveDeadline(selectedSupervisorKR.deadline);
+    setShowAIRecommendation(false);
+    
+    toast({
+      title: "AI Recommendations Applied",
+      description: `Applied objective "${objective.title}" with ${newKeyResults.length} key results and supervisor alignment`,
+    });
   };
 
   const handleSaveObjective = () => {
