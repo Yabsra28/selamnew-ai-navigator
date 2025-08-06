@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import ObjectiveSetModal from "@/components/ObjectiveSetModal";
 import { 
   BarChart3, 
   Target, 
@@ -18,6 +19,7 @@ import {
 } from "lucide-react";
 
 const Dashboard = () => {
+  const [isObjectiveModalOpen, setIsObjectiveModalOpen] = useState(false);
   const dashboardData = {
     summary: {
       totalOKRs: 24,
@@ -88,7 +90,7 @@ const Dashboard = () => {
             <Calendar className="mr-2 h-4 w-4" />
             This Quarter
           </Button>
-          <Button>
+          <Button onClick={() => setIsObjectiveModalOpen(true)}>
             <Target className="mr-2 h-4 w-4" />
             New OKR
           </Button>
@@ -224,6 +226,11 @@ const Dashboard = () => {
           </Card>
         </div>
       </div>
+
+      <ObjectiveSetModal 
+        isOpen={isObjectiveModalOpen}
+        onClose={() => setIsObjectiveModalOpen(false)}
+      />
     </div>
   );
 };
