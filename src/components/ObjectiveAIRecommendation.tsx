@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Brain, Target, TrendingUp, Clock, CheckCircle, X } from "lucide-react";
+import { Brain, Target, TrendingUp, Clock, CheckCircle, X, Users } from "lucide-react";
 
 interface KeyResultSuggestion {
   id: string;
@@ -18,22 +19,68 @@ interface KeyResultSuggestion {
   alignment: string;
 }
 
+interface SupervisorKeyResult {
+  id: string;
+  title: string;
+  department: string;
+  supervisor: string;
+  deadline: string;
+  progress: number;
+}
+
 interface ObjectiveAIRecommendationProps {
   isOpen: boolean;
   onClose: () => void;
-  supervisorKeyResult?: string;
-  onApprove: (keyResults: KeyResultSuggestion[]) => void;
+  onApprove: (keyResults: KeyResultSuggestion[], selectedSupervisorKR: SupervisorKeyResult) => void;
 }
 
 const ObjectiveAIRecommendation = ({
   isOpen,
   onClose,
-  supervisorKeyResult = "Improve team productivity by 25%",
   onApprove
 }: ObjectiveAIRecommendationProps) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedKeyResults, setSelectedKeyResults] = useState<string[]>([]);
+  const [selectedSupervisorKR, setSelectedSupervisorKR] = useState<string>("");
   const { toast } = useToast();
+
+  // Mock supervisor key results
+  const supervisorKeyResults: SupervisorKeyResult[] = [
+    {
+      id: "skr1",
+      title: "Improve team productivity by 25%",
+      department: "Engineering",
+      supervisor: "John Smith (Engineering Manager)",
+      deadline: "2024-06-30",
+      progress: 45
+    },
+    {
+      id: "skr2", 
+      title: "Increase customer satisfaction score to 4.8/5",
+      department: "Customer Success",
+      supervisor: "Sarah Johnson (CS Director)",
+      deadline: "2024-05-31",
+      progress: 70
+    },
+    {
+      id: "skr3",
+      title: "Reduce operational costs by 15%",
+      department: "Operations",
+      supervisor: "Mike Wilson (Operations Lead)",
+      deadline: "2024-04-30",
+      progress: 30
+    },
+    {
+      id: "skr4",
+      title: "Launch 3 new product features",
+      department: "Product",
+      supervisor: "Lisa Chen (Product Manager)",
+      deadline: "2024-07-31",
+      progress: 60
+    }
+  ];
+
+  const selectedSupervisorKRData = supervisorKeyResults.find(kr => kr.id === selectedSupervisorKR);
 
   // Mock AI-generated key results
   const mockKeyResults: KeyResultSuggestion[] = [
@@ -100,6 +147,15 @@ const ObjectiveAIRecommendation = ({
   ];
 
   const handleGenerateRecommendations = async () => {
+    if (!selectedSupervisorKR) {
+      toast({
+        title: "Please select a supervisor's key result",
+        description: "Choose which supervisor's objective you want to align with",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsGenerating(true);
     // Simulate AI processing
     await new Promise(resolve => setTimeout(resolve, 2000));
@@ -120,13 +176,15 @@ const ObjectiveAIRecommendation = ({
   };
 
   const handleApproveSelected = () => {
+    if (!selectedSupervisorKRData) return;
+    
     const approved = mockKeyResults.filter(kr => selectedKeyResults.includes(kr.id));
-    onApprove(approved);
+    onApprove(approved, selectedSupervisorKRData);
     onClose();
     
     toast({
       title: "Key Results Added",
-      description: `${approved.length} AI-recommended key results have been added to your objective`,
+      description: `${approved.length} AI-recommended key results aligned with ${selectedSupervisorKRData.supervisor}'s objective`,
     });
   };
 
@@ -148,26 +206,74 @@ const ObjectiveAIRecommendation = ({
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Supervisor Context */}
+          {/* Supervisor Key Result Selection */}
           <Card className="border-primary/20 bg-primary/5">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm text-muted-foreground">Supervisor's Key Result</CardTitle>
+              <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Select Supervisor's Key Result to Align With
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center gap-2">
-                <Target className="h-4 w-4 text-primary" />
-                <span className="font-medium">{supervisorKeyResult}</span>
-              </div>
+              <Select value={selectedSupervisorKR} onValueChange={setSelectedSupervisorKR}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Choose your supervisor's key result..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {supervisorKeyResults.map((kr) => (
+                    <SelectItem key={kr.id} value={kr.id}>
+                      <div className="flex flex-col items-start">
+                        <span className="font-medium">{kr.title}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {kr.supervisor} • {kr.department} • {kr.progress}% complete
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              {selectedSupervisorKRData && (
+                <div className="mt-3 p-3 bg-background rounded-lg border">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Target className="h-4 w-4 text-primary" />
+                    <span className="font-medium">{selectedSupervisorKRData.title}</span>
+                  </div>
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    <p>Supervisor: {selectedSupervisorKRData.supervisor}</p>
+                    <p>Department: {selectedSupervisorKRData.department}</p>
+                    <p>Due: {new Date(selectedSupervisorKRData.deadline).toLocaleDateString()}</p>
+                    <div className="flex items-center gap-2">
+                      <span>Progress: {selectedSupervisorKRData.progress}%</span>
+                      <div className="flex-1 bg-muted rounded-full h-2">
+                        <div 
+                          className="bg-primary h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${selectedSupervisorKRData.progress}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
           {/* Generate Button */}
-          {!isGenerating && mockKeyResults.length === 0 && (
+          {!isGenerating && (!selectedSupervisorKR || mockKeyResults.length === 0) && (
             <div className="text-center py-8">
-              <Button onClick={handleGenerateRecommendations} size="lg">
+              <Button 
+                onClick={handleGenerateRecommendations} 
+                size="lg"
+                disabled={!selectedSupervisorKR}
+              >
                 <Brain className="h-4 w-4 mr-2" />
                 Generate AI Recommendations
               </Button>
+              {!selectedSupervisorKR && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  Please select a supervisor's key result first
+                </p>
+              )}
             </div>
           )}
 
@@ -180,10 +286,12 @@ const ObjectiveAIRecommendation = ({
           )}
 
           {/* Recommendations */}
-          {!isGenerating && mockKeyResults.length > 0 && (
+          {!isGenerating && selectedSupervisorKR && mockKeyResults.length > 0 && (
             <>
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Recommended Key Results</h3>
+                <h3 className="text-lg font-semibold">
+                  Recommended Key Results for "{selectedSupervisorKRData?.title}"
+                </h3>
                 <Badge variant="secondary">
                   {selectedKeyResults.length} selected
                 </Badge>
@@ -272,7 +380,7 @@ const ObjectiveAIRecommendation = ({
                   
                   <Button
                     onClick={handleApproveSelected}
-                    disabled={selectedKeyResults.length === 0}
+                    disabled={selectedKeyResults.length === 0 || !selectedSupervisorKRData}
                   >
                     <CheckCircle className="h-4 w-4 mr-2" />
                     Add Selected Key Results ({selectedKeyResults.length})

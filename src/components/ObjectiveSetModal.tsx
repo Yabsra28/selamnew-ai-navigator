@@ -304,7 +304,6 @@ const ObjectiveSetModal = ({ isOpen, onClose }: ObjectiveSetModalProps) => {
       <ObjectiveAIRecommendation
         isOpen={showAIRecommendation}
         onClose={() => setShowAIRecommendation(false)}
-        supervisorKeyResult={supervisorKeyResult}
         onApprove={handleAIRecommendationApprove}
       />
     </>
