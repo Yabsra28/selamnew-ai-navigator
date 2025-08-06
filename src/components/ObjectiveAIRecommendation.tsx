@@ -5,8 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Brain, Target, TrendingUp, Clock, CheckCircle, X, Users } from "lucide-react";
+import { Brain, Target, TrendingUp, Clock, CheckCircle, X, Users, Edit3, Save } from "lucide-react";
 
 interface KeyResultSuggestion {
   id: string;
@@ -42,6 +44,8 @@ const ObjectiveAIRecommendation = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedKeyResults, setSelectedKeyResults] = useState<string[]>([]);
   const [selectedSupervisorKR, setSelectedSupervisorKR] = useState<string>("");
+  const [editingKeyResults, setEditingKeyResults] = useState<{[key: string]: KeyResultSuggestion}>({});
+  const [editingKeyResult, setEditingKeyResult] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Mock supervisor key results
@@ -178,7 +182,13 @@ const ObjectiveAIRecommendation = ({
   const handleApproveSelected = () => {
     if (!selectedSupervisorKRData) return;
     
-    const approved = mockKeyResults.filter(kr => selectedKeyResults.includes(kr.id));
+    // Use edited versions if available, otherwise use original
+    const approved = selectedKeyResults.map(id => {
+      const edited = editingKeyResults[id];
+      const original = mockKeyResults.find(kr => kr.id === id);
+      return edited || original!;
+    });
+    
     onApprove(approved, selectedSupervisorKRData);
     onClose();
     
@@ -186,6 +196,41 @@ const ObjectiveAIRecommendation = ({
       title: "Key Results Added",
       description: `${approved.length} AI-recommended key results aligned with ${selectedSupervisorKRData.supervisor}'s objective`,
     });
+  };
+
+  const startEditing = (keyResult: KeyResultSuggestion) => {
+    setEditingKeyResult(keyResult.id);
+    setEditingKeyResults(prev => ({
+      ...prev,
+      [keyResult.id]: { ...keyResult }
+    }));
+  };
+
+  const saveEdit = (id: string) => {
+    setEditingKeyResult(null);
+    toast({
+      title: "Changes Saved",
+      description: "Key result has been updated with your changes",
+    });
+  };
+
+  const cancelEdit = (id: string) => {
+    setEditingKeyResult(null);
+    setEditingKeyResults(prev => {
+      const updated = { ...prev };
+      delete updated[id];
+      return updated;
+    });
+  };
+
+  const updateEditingKeyResult = (id: string, field: keyof KeyResultSuggestion, value: any) => {
+    setEditingKeyResults(prev => ({
+      ...prev,
+      [id]: {
+        ...prev[id],
+        [field]: value
+      }
+    }));
   };
 
   const getConfidenceColor = (confidence: number) => {
@@ -298,67 +343,134 @@ const ObjectiveAIRecommendation = ({
               </div>
 
               <div className="grid gap-4">
-                {mockKeyResults.map((keyResult) => (
-                  <Card 
-                    key={keyResult.id}
-                    className={`cursor-pointer transition-all duration-200 ${
-                      selectedKeyResults.includes(keyResult.id)
-                        ? 'border-primary bg-primary/5 shadow-md'
-                        : 'border-border hover:border-primary/50'
-                    }`}
-                    onClick={() => toggleKeyResult(keyResult.id)}
-                  >
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-2">
-                          {selectedKeyResults.includes(keyResult.id) ? (
-                            <CheckCircle className="h-5 w-5 text-primary" />
-                          ) : (
-                            <div className="h-5 w-5 border-2 border-muted-foreground/30 rounded-full" />
-                          )}
-                          <CardTitle className="text-base">{keyResult.title}</CardTitle>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className={getConfidenceColor(keyResult.confidence)}>
-                            {keyResult.confidence}% confidence
-                          </Badge>
-                          <Badge variant="secondary">
-                            {keyResult.weight}% weight
-                          </Badge>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    
-                    <CardContent className="space-y-3">
-                      <p className="text-sm text-muted-foreground">{keyResult.description}</p>
-                      
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-4 w-4" />
-                          <span>Due: {new Date(keyResult.deadline).toLocaleDateString()}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <TrendingUp className="h-4 w-4" />
-                          <span>{keyResult.alignment}</span>
-                        </div>
-                      </div>
-
-                      <Separator />
-
-                      <div>
-                        <h4 className="text-sm font-medium mb-2">Suggested Milestones</h4>
-                        <div className="grid grid-cols-2 gap-2">
-                          {keyResult.milestones.map((milestone, index) => (
-                            <div key={index} className="flex items-center gap-2 text-sm">
-                              <div className="w-2 h-2 bg-primary/30 rounded-full" />
-                              <span className="text-muted-foreground">{milestone}</span>
+                {mockKeyResults.map((keyResult) => {
+                  const editedVersion = editingKeyResults[keyResult.id];
+                  const currentKeyResult = editedVersion || keyResult;
+                  const isEditing = editingKeyResult === keyResult.id;
+                  
+                  return (
+                    <Card 
+                      key={keyResult.id}
+                      className={`transition-all duration-200 ${
+                        selectedKeyResults.includes(keyResult.id)
+                          ? 'border-primary bg-primary/5 shadow-md'
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                    >
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-2 flex-1">
+                            <div 
+                              className="cursor-pointer"
+                              onClick={() => !isEditing && toggleKeyResult(keyResult.id)}
+                            >
+                              {selectedKeyResults.includes(keyResult.id) ? (
+                                <CheckCircle className="h-5 w-5 text-primary" />
+                              ) : (
+                                <div className="h-5 w-5 border-2 border-muted-foreground/30 rounded-full" />
+                              )}
                             </div>
-                          ))}
+                            
+                            {isEditing ? (
+                              <Input
+                                value={currentKeyResult.title}
+                                onChange={(e) => updateEditingKeyResult(keyResult.id, 'title', e.target.value)}
+                                className="flex-1 font-medium"
+                                placeholder="Key result title..."
+                              />
+                            ) : (
+                              <CardTitle className="text-base flex-1">{currentKeyResult.title}</CardTitle>
+                            )}
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            {isEditing ? (
+                              <div className="flex gap-1">
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost"
+                                  onClick={() => saveEdit(keyResult.id)}
+                                >
+                                  <Save className="h-3 w-3" />
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost"
+                                  onClick={() => cancelEdit(keyResult.id)}
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <Button 
+                                size="sm" 
+                                variant="ghost"
+                                onClick={() => startEditing(keyResult)}
+                              >
+                                <Edit3 className="h-3 w-3" />
+                              </Button>
+                            )}
+                            
+                            <Badge variant="outline" className={getConfidenceColor(currentKeyResult.confidence)}>
+                              {currentKeyResult.confidence}% confidence
+                            </Badge>
+                            <Badge variant="secondary">
+                              {currentKeyResult.weight}% weight
+                            </Badge>
+                          </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardHeader>
+                      
+                      <CardContent className="space-y-3">
+                        {isEditing ? (
+                          <Textarea
+                            value={currentKeyResult.description}
+                            onChange={(e) => updateEditingKeyResult(keyResult.id, 'description', e.target.value)}
+                            className="text-sm"
+                            placeholder="Key result description..."
+                            rows={2}
+                          />
+                        ) : (
+                          <p className="text-sm text-muted-foreground">{currentKeyResult.description}</p>
+                        )}
+                        
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-4 w-4" />
+                            {isEditing ? (
+                              <Input
+                                type="date"
+                                value={currentKeyResult.deadline}
+                                onChange={(e) => updateEditingKeyResult(keyResult.id, 'deadline', e.target.value)}
+                                className="text-xs h-6 w-32"
+                              />
+                            ) : (
+                              <span>Due: {new Date(currentKeyResult.deadline).toLocaleDateString()}</span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <TrendingUp className="h-4 w-4" />
+                            <span>{currentKeyResult.alignment}</span>
+                          </div>
+                        </div>
+
+                        <Separator />
+
+                        <div>
+                          <h4 className="text-sm font-medium mb-2">Suggested Milestones</h4>
+                          <div className="grid grid-cols-2 gap-2">
+                            {currentKeyResult.milestones.map((milestone, index) => (
+                              <div key={index} className="flex items-center gap-2 text-sm">
+                                <div className="w-2 h-2 bg-primary/30 rounded-full" />
+                                <span className="text-muted-foreground">{milestone}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
 
               {/* Action Buttons */}
