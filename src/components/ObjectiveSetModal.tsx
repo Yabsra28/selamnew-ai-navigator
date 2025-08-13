@@ -100,10 +100,10 @@ const ObjectiveSetModal = ({ isOpen, onClose }: ObjectiveSetModalProps) => {
   };
 
   const handleSaveObjective = () => {
-    if (!objectiveName || !supervisorKeyResult || !objectiveDeadline) {
+    if (!supervisorKeyResult || !objectiveDeadline) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all required fields",
+        description: "Please select an objective and set a deadline",
         variant: "destructive"
       });
       return;
@@ -146,33 +146,24 @@ const ObjectiveSetModal = ({ isOpen, onClose }: ObjectiveSetModalProps) => {
           </DialogHeader>
 
           <div className="space-y-6">
-            {/* Objective Information */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="objectiveName">Objective Name *</Label>
-                <Input
-                  id="objectiveName"
-                  value={objectiveName}
-                  onChange={(e) => setObjectiveName(e.target.value)}
-                  placeholder="Enter your objective name"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="objectiveDeadline">Objective Deadline *</Label>
-                <Input
-                  id="objectiveDeadline"
-                  type="date"
-                  value={objectiveDeadline}
-                  onChange={(e) => setObjectiveDeadline(e.target.value)}
-                />
-              </div>
+            {/* Objective Deadline */}
+            <div className="space-y-2">
+              <Label htmlFor="objectiveDeadline">Objective Deadline *</Label>
+              <Input
+                id="objectiveDeadline"
+                type="date"
+                value={objectiveDeadline}
+                onChange={(e) => setObjectiveDeadline(e.target.value)}
+              />
             </div>
 
             {/* Supervisor Key Result */}
             <div className="space-y-2">
-              <Label htmlFor="supervisorKeyResult">Supervisor Key Result *</Label>
-              <Select value={supervisorKeyResult} onValueChange={setSupervisorKeyResult}>
+              <Label htmlFor="supervisorKeyResult">Select Objective (Supervisor Key Result) *</Label>
+              <Select value={supervisorKeyResult} onValueChange={(value) => {
+                setSupervisorKeyResult(value);
+                setObjectiveName(value); // Auto-set objective name
+              }}>
                 <SelectTrigger>
                   <SelectValue placeholder="Search and select a Key Result" />
                 </SelectTrigger>
