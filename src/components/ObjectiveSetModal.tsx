@@ -9,8 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, X, Calendar, Weight, Target } from "lucide-react";
-import AIInsightButton from "./AIInsightButton";
-import ObjectiveAIRecommendation from "./ObjectiveAIRecommendation";
+import InlineAISuggestions from "./InlineAISuggestions";
 
 interface KeyResult {
   id: string;
@@ -40,7 +39,6 @@ const ObjectiveSetModal = ({ isOpen, onClose }: ObjectiveSetModalProps) => {
   const [supervisorKeyResult, setSupervisorKeyResult] = useState("");
   const [objectiveDeadline, setObjectiveDeadline] = useState("");
   const [keyResults, setKeyResults] = useState<KeyResult[]>([]);
-  const [showAIRecommendation, setShowAIRecommendation] = useState(false);
   const [newKeyResult, setNewKeyResult] = useState({
     title: "",
     weight: "",
@@ -89,27 +87,16 @@ const ObjectiveSetModal = ({ isOpen, onClose }: ObjectiveSetModalProps) => {
     setKeyResults(prev => prev.filter(kr => kr.id !== id));
   };
 
-  const handleAIRecommendationApprove = (objective: ObjectiveSuggestion, aiKeyResults: any[], selectedSupervisorKR: any) => {
-    // Apply the objective suggestion
-    setObjectiveName(objective.title);
-    
-    const newKeyResults: KeyResult[] = aiKeyResults.map(kr => ({
-      id: kr.id,
-      title: kr.title,
-      weight: kr.weight,
-      deadline: kr.deadline,
-      milestones: kr.milestones
-    }));
-    
-    setKeyResults(prev => [...prev, ...newKeyResults]);
-    setSupervisorKeyResult(selectedSupervisorKR.title);
-    setObjectiveDeadline(selectedSupervisorKR.deadline);
-    setShowAIRecommendation(false);
-    
-    toast({
-      title: "AI Recommendations Applied",
-      description: `Applied objective "${objective.title}" with ${newKeyResults.length} key results and supervisor alignment`,
-    });
+  const handleAddAISuggestion = (suggestion: any) => {
+    const keyResult: KeyResult = {
+      id: suggestion.id,
+      title: suggestion.title,
+      weight: suggestion.weight,
+      deadline: suggestion.deadline,
+      milestones: []
+    };
+
+    setKeyResults(prev => [...prev, keyResult]);
   };
 
   const handleSaveObjective = () => {
@@ -203,13 +190,15 @@ const ObjectiveSetModal = ({ isOpen, onClose }: ObjectiveSetModalProps) => {
 
             {/* Set Key Results Section */}
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Set Key Results</h3>
-                <AIInsightButton 
-                  onClick={() => setShowAIRecommendation(true)}
-                  className="ml-auto"
+              <h3 className="text-lg font-semibold">Set Key Results</h3>
+
+              {/* AI Suggestions - Show when supervisor key result is selected */}
+              {supervisorKeyResult && (
+                <InlineAISuggestions
+                  supervisorKeyResult={supervisorKeyResult}
+                  onAddSuggestion={handleAddAISuggestion}
                 />
-              </div>
+              )}
 
               {/* Add New Key Result */}
               <Card className="border-dashed">
@@ -320,13 +309,6 @@ const ObjectiveSetModal = ({ isOpen, onClose }: ObjectiveSetModalProps) => {
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* AI Recommendation Modal */}
-      <ObjectiveAIRecommendation
-        isOpen={showAIRecommendation}
-        onClose={() => setShowAIRecommendation(false)}
-        onApprove={handleAIRecommendationApprove}
-      />
     </>
   );
 };
