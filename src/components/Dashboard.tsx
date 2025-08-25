@@ -92,7 +92,7 @@ const Dashboard = () => {
           </Button>
           <Button onClick={() => setIsObjectiveModalOpen(true)}>
             <Target className="mr-2 h-4 w-4" />
-            New OKR
+            Set OKR
           </Button>
         </div>
       </div>

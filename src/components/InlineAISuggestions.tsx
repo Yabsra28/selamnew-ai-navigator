@@ -23,6 +23,7 @@ interface InlineAISuggestionsProps {
 const InlineAISuggestions = ({ supervisorKeyResult, onAddSuggestion }: InlineAISuggestionsProps) => {
   const [suggestions, setSuggestions] = useState<AISuggestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [editingSuggestion, setEditingSuggestion] = useState<string | null>(null);
   const [editValues, setEditValues] = useState<Record<string, Partial<AISuggestion>>>({});
   
@@ -111,117 +112,122 @@ const InlineAISuggestions = ({ supervisorKeyResult, onAddSuggestion }: InlineAIS
   if (!supervisorKeyResult) return null;
 
   return (
-    <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-primary" />
-            AI Key Result Suggestion
-          </CardTitle>
-          <div className="text-sm text-muted-foreground">
-            I have made you {suggestions.length} Suggestions
+    <Card className="border-2 border-blue-200 bg-blue-50/50">
+      <CardHeader className="pb-3">
+        <div 
+          className="flex items-center justify-between cursor-pointer"
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+            <CardTitle className="text-base text-blue-700">AI Key Result Suggestion</CardTitle>
           </div>
+          <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-200">
+            I have made you {suggestions.length} Suggestions
+          </Badge>
         </div>
-        <p className="text-sm font-medium">
+        <p className="text-sm font-medium text-blue-800 mt-2">
           {supervisorKeyResult}
         </p>
       </CardHeader>
       
-      <CardContent className="space-y-3">
-        {isLoading ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="animate-pulse">
-                <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
-                <div className="h-3 bg-muted rounded w-1/2"></div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          suggestions.map((suggestion) => (
-            <Card key={suggestion.id} className="bg-background/60 border-muted">
-              <CardContent className="pt-4">
-                {editingSuggestion === suggestion.id ? (
-                  <div className="space-y-3">
-                    <Input
-                      value={editValues[suggestion.id]?.title || suggestion.title}
-                      onChange={(e) => setEditValues(prev => ({
-                        ...prev,
-                        [suggestion.id]: { ...prev[suggestion.id], title: e.target.value }
-                      }))}
-                      placeholder="Key result title"
-                    />
-                    <div className="grid grid-cols-2 gap-2">
+      {isExpanded && (
+        <CardContent className="space-y-3">
+          {isLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+                  <div className="h-3 bg-muted rounded w-1/2"></div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            suggestions.map((suggestion) => (
+              <Card key={suggestion.id} className="bg-background/60 border-muted">
+                <CardContent className="pt-4">
+                  {editingSuggestion === suggestion.id ? (
+                    <div className="space-y-3">
                       <Input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={editValues[suggestion.id]?.weight || suggestion.weight}
+                        value={editValues[suggestion.id]?.title || suggestion.title}
                         onChange={(e) => setEditValues(prev => ({
                           ...prev,
-                          [suggestion.id]: { ...prev[suggestion.id], weight: parseInt(e.target.value) || 0 }
+                          [suggestion.id]: { ...prev[suggestion.id], title: e.target.value }
                         }))}
-                        placeholder="Weight %"
+                        placeholder="Key result title"
                       />
-                      <Input
-                        type="date"
-                        value={editValues[suggestion.id]?.deadline || suggestion.deadline}
-                        onChange={(e) => setEditValues(prev => ({
-                          ...prev,
-                          [suggestion.id]: { ...prev[suggestion.id], deadline: e.target.value }
-                        }))}
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={() => handleSaveEdit(suggestion.id)}>
-                        <Save className="h-3 w-3 mr-1" />
-                        Save
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={handleCancelEdit}>
-                        <X className="h-3 w-3 mr-1" />
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h4 className="font-medium mb-1">{suggestion.title}</h4>
-                      <p className="text-sm text-muted-foreground mb-2">{suggestion.description}</p>
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Weight className="h-3 w-3" />
-                          <span>{suggestion.weight}%</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          <span>{new Date(suggestion.deadline).toLocaleDateString()}</span>
-                        </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={editValues[suggestion.id]?.weight || suggestion.weight}
+                          onChange={(e) => setEditValues(prev => ({
+                            ...prev,
+                            [suggestion.id]: { ...prev[suggestion.id], weight: parseInt(e.target.value) || 0 }
+                          }))}
+                          placeholder="Weight %"
+                        />
+                        <Input
+                          type="date"
+                          value={editValues[suggestion.id]?.deadline || suggestion.deadline}
+                          onChange={(e) => setEditValues(prev => ({
+                            ...prev,
+                            [suggestion.id]: { ...prev[suggestion.id], deadline: e.target.value }
+                          }))}
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={() => handleSaveEdit(suggestion.id)}>
+                          <Save className="h-3 w-3 mr-1" />
+                          Save
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={handleCancelEdit}>
+                          <X className="h-3 w-3 mr-1" />
+                          Cancel
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex gap-1 ml-2">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleEdit(suggestion.id, suggestion)}
-                      >
-                        <Edit2 className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={() => handleAddToKeyResults(suggestion)}
-                      >
-                        <Plus className="h-3 w-3 mr-1" />
-                        Add
-                      </Button>
+                  ) : (
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h4 className="font-medium mb-1">{suggestion.title}</h4>
+                        <p className="text-sm text-muted-foreground mb-2">{suggestion.description}</p>
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <Weight className="h-3 w-3" />
+                            <span>{suggestion.weight}%</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            <span>{new Date(suggestion.deadline).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-1 ml-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleEdit(suggestion.id, suggestion)}
+                        >
+                          <Edit2 className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => handleAddToKeyResults(suggestion)}
+                        >
+                          <Plus className="h-3 w-3 mr-1" />
+                          Add
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </CardContent>
+                  )}
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </CardContent>
+      )}
     </Card>
   );
 };

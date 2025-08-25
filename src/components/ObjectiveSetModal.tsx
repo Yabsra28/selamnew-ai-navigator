@@ -35,7 +35,6 @@ interface ObjectiveSetModalProps {
 }
 
 const ObjectiveSetModal = ({ isOpen, onClose }: ObjectiveSetModalProps) => {
-  const [objectiveName, setObjectiveName] = useState("");
   const [supervisorKeyResult, setSupervisorKeyResult] = useState("");
   const [objectiveDeadline, setObjectiveDeadline] = useState("");
   const [keyResults, setKeyResults] = useState<KeyResult[]>([]);
@@ -100,7 +99,7 @@ const ObjectiveSetModal = ({ isOpen, onClose }: ObjectiveSetModalProps) => {
   };
 
   const handleSaveObjective = () => {
-    if (!objectiveName || !supervisorKeyResult || !objectiveDeadline) {
+    if (!supervisorKeyResult || !objectiveDeadline) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields",
@@ -154,9 +153,10 @@ const ObjectiveSetModal = ({ isOpen, onClose }: ObjectiveSetModalProps) => {
                   <Label htmlFor="objectiveName">Objective *</Label>
                   <Input
                     id="objectiveName"
-                    value={objectiveName}
-                    onChange={(e) => setObjectiveName(e.target.value)}
-                    placeholder="retain 2,000,000 by the end of the month"
+                    value={supervisorKeyResult}
+                    readOnly
+                    placeholder="Select alignment to set objective"
+                    className="bg-muted"
                   />
                 </div>
                 
