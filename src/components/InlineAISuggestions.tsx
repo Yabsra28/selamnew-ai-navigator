@@ -116,21 +116,14 @@ const InlineAISuggestions = ({ supervisorKeyResult, onAddSuggestion }: InlineAIS
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-primary" />
-            AI Key Result Suggestions
+            AI Key Result Suggestion
           </CardTitle>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={generateSuggestions}
-            disabled={isLoading}
-            className="gap-2"
-          >
-            <RefreshCw className={`h-3 w-3 ${isLoading ? 'animate-spin' : ''}`} />
-            Regenerate
-          </Button>
+          <div className="text-sm text-muted-foreground">
+            I have made you {suggestions.length} Suggestions
+          </div>
         </div>
-        <p className="text-sm text-muted-foreground">
-          Based on: "{supervisorKeyResult}"
+        <p className="text-sm font-medium">
+          {supervisorKeyResult}
         </p>
       </CardHeader>
       

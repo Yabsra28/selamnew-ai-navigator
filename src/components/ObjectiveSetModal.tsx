@@ -142,55 +142,61 @@ const ObjectiveSetModal = ({ isOpen, onClose }: ObjectiveSetModalProps) => {
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Set Objective</DialogTitle>
+            <DialogTitle className="text-center text-xl font-semibold">OKR</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-6">
-            {/* Objective Information */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="objectiveName">Objective Name *</Label>
-                <Input
-                  id="objectiveName"
-                  value={objectiveName}
-                  onChange={(e) => setObjectiveName(e.target.value)}
-                  placeholder="Enter your objective name"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="objectiveDeadline">Objective Deadline *</Label>
-                <Input
-                  id="objectiveDeadline"
-                  type="date"
-                  value={objectiveDeadline}
-                  onChange={(e) => setObjectiveDeadline(e.target.value)}
-                />
-              </div>
-            </div>
-
-            {/* Supervisor Key Result */}
-            <div className="space-y-2">
-              <Label htmlFor="supervisorKeyResult">Supervisor Key Result *</Label>
-              <Select value={supervisorKeyResult} onValueChange={setSupervisorKeyResult}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Search and select a Key Result" />
-                </SelectTrigger>
-                <SelectContent>
-                  {supervisorKeyResults.map((kr, index) => (
-                    <SelectItem key={index} value={kr}>
-                      {kr}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <Separator />
-
-            {/* Set Key Results Section */}
+            {/* Objective Section */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Set Key Results</h3>
+              <h3 className="text-lg font-semibold">Objective</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="objectiveName">Objective *</Label>
+                  <Input
+                    id="objectiveName"
+                    value={objectiveName}
+                    onChange={(e) => setObjectiveName(e.target.value)}
+                    placeholder="retain 2,000,000 by the end of the month"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="alignment">Alignment *</Label>
+                  <Select value={supervisorKeyResult} onValueChange={setSupervisorKeyResult}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select alignment" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {supervisorKeyResults.map((kr, index) => (
+                        <SelectItem key={index} value={kr}>
+                          {kr}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="objectiveDeadline">Objective Deadline *</Label>
+                  <Input
+                    id="objectiveDeadline"
+                    type="date"
+                    value={objectiveDeadline}
+                    onChange={(e) => setObjectiveDeadline(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Key Result Section */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Key Result</h3>
+                <Button className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Key Result
+                </Button>
+              </div>
 
               {/* AI Suggestions - Show when supervisor key result is selected */}
               {supervisorKeyResult && (
@@ -200,94 +206,40 @@ const ObjectiveSetModal = ({ isOpen, onClose }: ObjectiveSetModalProps) => {
                 />
               )}
 
-              {/* Add New Key Result */}
-              <Card className="border-dashed">
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Plus className="h-4 w-4" />
-                    Add Key Result
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="md:col-span-2">
-                      <Label htmlFor="keyResultName">Key Result Name</Label>
-                      <Input
-                        id="keyResultName"
-                        value={newKeyResult.title}
-                        onChange={(e) => setNewKeyResult(prev => ({ ...prev, title: e.target.value }))}
-                        placeholder="Enter key result name"
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="weight">Weight (%)</Label>
-                      <Input
-                        id="weight"
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={newKeyResult.weight}
-                        onChange={(e) => setNewKeyResult(prev => ({ ...prev, weight: e.target.value }))}
-                        placeholder="0"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="deadline">Deadline</Label>
-                      <Input
-                        id="deadline"
-                        type="date"
-                        value={newKeyResult.deadline}
-                        onChange={(e) => setNewKeyResult(prev => ({ ...prev, deadline: e.target.value }))}
-                      />
-                    </div>
-                    
-                    <div className="flex items-end">
-                      <Button onClick={handleAddKeyResult} className="w-full">
-                        Add Key Result
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
 
               {/* Existing Key Results */}
               {keyResults.length > 0 && (
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-medium">Key Results ({keyResults.length})</h4>
-                    <Badge variant={keyResults.reduce((sum, kr) => sum + kr.weight, 0) === 100 ? "default" : "destructive"}>
-                      Total Weight: {keyResults.reduce((sum, kr) => sum + kr.weight, 0)}%
-                    </Badge>
-                  </div>
-                  
                   {keyResults.map((keyResult) => (
                     <Card key={keyResult.id} className="bg-muted/30">
                       <CardContent className="pt-4">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <h5 className="font-medium mb-2">{keyResult.title}</h5>
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                              <div className="flex items-center gap-1">
-                                <Weight className="h-3 w-3" />
-                                <span>{keyResult.weight}%</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Calendar className="h-3 w-3" />
-                                <span>{new Date(keyResult.deadline).toLocaleDateString()}</span>
-                              </div>
+                            <p className="text-sm text-muted-foreground mb-2">This is a Key Result from the AI</p>
+                            <div className="flex items-center gap-4">
+                              <Select defaultValue="milestone">
+                                <SelectTrigger className="w-32">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="milestone">Milestone</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <span className="text-sm font-medium">{keyResult.weight}%</span>
                             </div>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleRemoveKeyResult(keyResult.id)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRemoveKeyResult(keyResult.id)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                            <Button size="sm">
+                              Add Milestone
+                            </Button>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -303,7 +255,7 @@ const ObjectiveSetModal = ({ isOpen, onClose }: ObjectiveSetModalProps) => {
               </Button>
               
               <Button onClick={handleSaveObjective}>
-                Save Objective
+                Add
               </Button>
             </div>
           </div>
