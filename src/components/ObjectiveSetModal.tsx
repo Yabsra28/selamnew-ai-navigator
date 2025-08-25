@@ -38,6 +38,7 @@ const ObjectiveSetModal = ({ isOpen, onClose }: ObjectiveSetModalProps) => {
   const [supervisorKeyResult, setSupervisorKeyResult] = useState("");
   const [objectiveDeadline, setObjectiveDeadline] = useState("");
   const [keyResults, setKeyResults] = useState<KeyResult[]>([]);
+  const [showManualForm, setShowManualForm] = useState(false);
   const [newKeyResult, setNewKeyResult] = useState({
     title: "",
     weight: "",
@@ -192,11 +193,62 @@ const ObjectiveSetModal = ({ isOpen, onClose }: ObjectiveSetModalProps) => {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">Key Result</h3>
-                <Button className="gap-2">
+                <Button className="gap-2" onClick={() => setShowManualForm(!showManualForm)}>
                   <Plus className="h-4 w-4" />
                   Key Result
                 </Button>
               </div>
+
+              {/* Manual Key Result Form */}
+              {showManualForm && (
+                <Card className="border-dashed">
+                  <CardHeader>
+                    <CardTitle className="text-base">Add Manual Key Result</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="keyResultTitle">Key Result Title *</Label>
+                      <Input
+                        id="keyResultTitle"
+                        value={newKeyResult.title}
+                        onChange={(e) => setNewKeyResult(prev => ({ ...prev, title: e.target.value }))}
+                        placeholder="e.g., Complete user onboarding redesign"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="keyResultWeight">Weight (%) *</Label>
+                        <Input
+                          id="keyResultWeight"
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={newKeyResult.weight}
+                          onChange={(e) => setNewKeyResult(prev => ({ ...prev, weight: e.target.value }))}
+                          placeholder="25"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="keyResultDeadline">Deadline *</Label>
+                        <Input
+                          id="keyResultDeadline"
+                          type="date"
+                          value={newKeyResult.deadline}
+                          onChange={(e) => setNewKeyResult(prev => ({ ...prev, deadline: e.target.value }))}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button onClick={handleAddKeyResult}>
+                        Add Key Result
+                      </Button>
+                      <Button variant="outline" onClick={() => setShowManualForm(false)}>
+                        Cancel
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* AI Suggestions - Show when supervisor key result is selected */}
               {supervisorKeyResult && (

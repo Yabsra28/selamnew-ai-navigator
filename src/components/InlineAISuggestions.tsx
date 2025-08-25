@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
@@ -26,15 +27,17 @@ const InlineAISuggestions = ({ supervisorKeyResult, onAddSuggestion }: InlineAIS
   const [isExpanded, setIsExpanded] = useState(false);
   const [editingSuggestion, setEditingSuggestion] = useState<string | null>(null);
   const [editValues, setEditValues] = useState<Record<string, Partial<AISuggestion>>>({});
+  const [showPrompt, setShowPrompt] = useState(false);
+  const [userPrompt, setUserPrompt] = useState("");
   
   const { toast } = useToast();
 
-  const generateSuggestions = async () => {
+  const generateSuggestions = async (customPrompt?: string) => {
     setIsLoading(true);
     
     // Simulate API call with mock data
     setTimeout(() => {
-      const mockSuggestions: AISuggestion[] = [
+      let mockSuggestions: AISuggestion[] = [
         {
           id: "ai_1",
           title: "Implement automated testing pipeline",
@@ -57,15 +60,37 @@ const InlineAISuggestions = ({ supervisorKeyResult, onAddSuggestion }: InlineAIS
           description: "Introduce modern tools to enhance team communication and collaboration"
         }
       ];
+
+      // If custom prompt provided, modify suggestions accordingly
+      if (customPrompt) {
+        mockSuggestions = mockSuggestions.map((suggestion, index) => ({
+          ...suggestion,
+          id: `ai_custom_${index + 1}`,
+          title: `${suggestion.title} (optimized for: ${customPrompt.substring(0, 20)}...)`,
+          description: `${suggestion.description} - Tailored based on your specific requirements.`
+        }));
+      }
       
       setSuggestions(mockSuggestions);
       setIsLoading(false);
       
       toast({
         title: "AI Suggestions Generated",
-        description: `Generated ${mockSuggestions.length} key result suggestions based on "${supervisorKeyResult}"`
+        description: customPrompt 
+          ? `Generated ${mockSuggestions.length} optimized suggestions based on your prompt`
+          : `Generated ${mockSuggestions.length} key result suggestions based on "${supervisorKeyResult}"`
       });
     }, 1500);
+  };
+
+  const handleRegenerate = () => {
+    if (userPrompt.trim()) {
+      generateSuggestions(userPrompt);
+      setUserPrompt("");
+      setShowPrompt(false);
+    } else {
+      generateSuggestions();
+    }
   };
 
   useEffect(() => {
@@ -122,13 +147,57 @@ const InlineAISuggestions = ({ supervisorKeyResult, onAddSuggestion }: InlineAIS
             <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
             <CardTitle className="text-base text-blue-700">AI Key Result Suggestion</CardTitle>
           </div>
-          <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-200">
-            I have made you {suggestions.length} Suggestions
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-200">
+              I have made you {suggestions.length} Suggestions
+            </Badge>
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowPrompt(!showPrompt);
+              }}
+              className="text-xs"
+            >
+              <RefreshCw className="h-3 w-3 mr-1" />
+              Regenerate
+            </Button>
+          </div>
         </div>
         <p className="text-sm font-medium text-blue-800 mt-2">
           {supervisorKeyResult}
         </p>
+        
+        {/* Regenerate Prompt Section */}
+        {showPrompt && (
+          <div className="mt-4 space-y-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-blue-800">
+                Customize AI Response (Optional)
+              </Label>
+              <Input
+                value={userPrompt}
+                onChange={(e) => setUserPrompt(e.target.value)}
+                placeholder="e.g., Focus on cost reduction, emphasize team collaboration, include technical metrics..."
+                className="text-sm"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" onClick={handleRegenerate} disabled={isLoading}>
+                {isLoading ? (
+                  <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-3 w-3 mr-1" />
+                )}
+                Generate
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setShowPrompt(false)}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
       </CardHeader>
       
       {isExpanded && (
